@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#667eea">
+    <meta name="description" content="我的小APP - 一个简单好用的应用">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="我的小APP">
+    
+    <title>我的小APP</title>
+    
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icon-192.png">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            width: 100%;
+            max-width: 400px;
+        }
+        
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 28px;
+        }
+        
+        input {
+            width: 100%;
+            padding: 15px;
+            font-size: 16px;
+            border: 2px solid #ddd;
+            border-radius: 12px;
+            margin-bottom: 15px;
+            transition: border-color 0.3s;
+        }
+        
+        input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        button {
+            width: 100%;
+            padding: 15px;
+            font-size: 18px;
+            font-weight: 600;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        button:active {
+            transform: scale(0.98);
+        }
+        
+        #result {
+            margin-top: 25px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 12px;
+            border-left: 4px solid #667eea;
+            display: none;
+        }
+        
+        #result.show {
+            display: block;
+            animation: slideIn 0.3s ease-out;
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .install-prompt {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            right: 20px;
+            background: white;
+            padding: 15px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+            display: none;
+            animation: slideUp 0.3s ease-out;
+        }
+        
+        .install-prompt.show {
+            display: block;
+        }
+        
+        .install-prompt button {
+            margin-top: 10px;
+            padding: 12px;
+            font-size: 16px;
+        }
+        
+        @keyframes slideUp {
+            from {
+                transform: translateY(100px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+        
+        .close-btn {
+            background: #e74c3c !important;
+            margin-top: 5px !important;
+            padding: 8px !important;
+            font-size: 14px !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📱 我的小APP</h1>
+        <input type="text" id="userInput" placeholder="输入点东西" autocomplete="off">
+        <button onclick="handleClick()">点我</button>
+        <div id="result"></div>
+    </div>
+
+    <div class="install-prompt" id="installPrompt">
+        <p style="margin-bottom: 10px; color: #333; font-weight: 600;">📲 将此APP添加到主屏幕</p>
+        <p style="font-size: 14px; color: #666; margin-bottom: 10px;">获得更好的使用体验！</p>
+        <button onclick="installApp()">立即安装</button>
+        <button class="close-btn" onclick="closePrompt()">稍后再说</button>
+    </div>
+
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('service-worker.js')
+                    .then(reg => console.log('Service Worker 注册成功'))
+                    .catch(err => console.log('Service Worker 注册失败', err));
+            });
+        }
+
+        let deferredPrompt;
+        
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            document.getElementById('installPrompt').classList.add('show');
+        });
+
+        function installApp() {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                deferredPrompt.userChoice.then((choiceResult) => {
+                    if (choiceResult.outcome === 'accepted') {
+                        console.log('用户接受了安装');
+                    }
+                    deferredPrompt = null;
+                    closePrompt();
+                });
+            }
+        }
+
+        function closePrompt() {
+            document.getElementById('installPrompt').classList.remove('show');
+        }
+
+        function handleClick() {
+            const input = document.getElementById('userInput');
+            const result = document.getElementById('result');
+            const value = input.value.trim();
+            
+            if (value) {
+                result.innerHTML = `
+                    <strong style="color: #333;">你输入了：</strong><br>
+                    <p style="font-size: 20px; color: #667eea; margin: 15px 0; font-weight: 600;">${value}</p>
+                    <p style="color: #666; font-size: 14px;">字符数：${value.length}</p>
+                `;
+                result.classList.add('show');
+            } else {
+                result.innerHTML = '<p style="color: #e74c3c;">⚠️ 请先输入一些内容！</p>';
+                result.classList.add('show');
+            }
+        }
+        
+        document.getElementById('userInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                handleClick();
+            }
+        });
+
+        let lastTouchEnd = 0;
+        document.addEventListener('touchend', function(e) {
+            const now = Date.now();
+            if (now - lastTouchEnd <= 300) {
+                e.preventDefault();
+            }
+            lastTouchEnd = now;
+        }, false);
+    </script>
+</body>
+</html>
